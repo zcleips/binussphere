@@ -1,5 +1,5 @@
 "use client";
-
+import DarkModeToggle from "../components/DarkModeToggle";
 import Link from "next/link";
 import { useState } from "react";
 import { MessageCircle, Send } from "lucide-react";
@@ -78,21 +78,22 @@ export default function MessagesPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F5F7FB] text-slate-900">
-      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 px-8 py-4 flex items-center justify-between">
+    <main className="min-h-screen bg-[#F5F7FB] text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <nav className="sticky top-0 z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-8 py-4 flex items-center justify-between">
         <img src="/logo.png" alt="Binusphere" className="w-[170px]" />
 
         <div className="w-[420px]">
           <input
             placeholder="Search BinusSphere"
-            className="w-full rounded-full bg-slate-100 border border-slate-200 px-5 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 px-5 py-3 outline-none focus:ring-2 focus:ring-blue-400"
           />
         </div>
 
         <div className="flex items-center gap-3">
+          <DarkModeToggle />
           <Link
             href="/messages"
-            className="w-10 h-10 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center transition"
+            className="w-10 h-10 rounded-full bg-blue-100 dark:bg-slate-800 text-blue-500 dark:text-blue-400 flex items-center justify-center transition"
           >
             <MessageCircle className="w-5 h-5" />
           </Link>
@@ -108,24 +109,29 @@ export default function MessagesPage() {
 
       <section className="max-w-7xl mx-auto grid grid-cols-[240px_1fr] gap-6 px-6 py-6">
         <aside className="sticky top-24 h-fit">
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-4">
-            <MenuItem icon="🏠" text="Home" href="/home" />
-            <MenuItem icon="💬" text="Forum" href="/forum" />
-            <MenuItem icon="🛒" text="Marketplace" href="/marketplace" />
-            <MenuItem icon="🔔" text="Notifications" href="/notifications" />
-            <MenuItem icon="👤" text="Profile" href="/profile" />
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 p-4">
+            <MenuItem icon="" text="Home" href="/home" />
+            <MenuItem icon="" text="Forum" href="/forum" />
+            <MenuItem icon="" text="Marketplace" href="/marketplace" />
+            <MenuItem icon="" text="Notifications" href="/notifications" />
+            <MenuItem icon="" text="Profile" href="/profile" />
 
-            <button className="mt-5 w-full rounded-full bg-yellow-400 text-slate-900 font-extrabold py-3 hover:bg-yellow-500 transition">
-              Create Post
-            </button>
+            <Link
+  href="/home?focusPost=true"
+  className="mt-5 block w-full rounded-full bg-yellow-400 text-center text-slate-900 font-extrabold py-3 hover:bg-yellow-500 transition"
+>
+  Create Post
+</Link>
           </div>
         </aside>
 
-        <section className="grid grid-cols-[330px_1fr] bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden min-h-[650px]">
-          <div className="border-r border-slate-200">
-            <div className="p-5 border-b border-slate-200">
-              <h1 className="text-2xl font-extrabold">Messages</h1>
-              <p className="text-slate-500 text-sm mt-1">
+        <section className="grid grid-cols-[330px_1fr] bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden min-h-[650px]">
+          <div className="border-r border-slate-200 dark:border-slate-800">
+            <div className="p-5 border-b border-slate-200 dark:border-slate-800">
+              <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">
+                Messages
+              </h1>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
                 Direct messages from Binusians.
               </p>
             </div>
@@ -134,8 +140,10 @@ export default function MessagesPage() {
               <button
                 key={chat.id}
                 onClick={() => setSelectedChatId(chat.id)}
-                className={`w-full text-left p-4 flex gap-3 border-b border-slate-100 transition ${
-                  selectedChatId === chat.id ? "bg-blue-50" : "hover:bg-slate-50"
+                className={`w-full text-left p-4 flex gap-3 border-b border-slate-100 dark:border-slate-800 transition ${
+                  selectedChatId === chat.id
+                    ? "bg-blue-50 dark:bg-slate-800"
+                    : "hover:bg-slate-50 dark:hover:bg-slate-800"
                 }`}
               >
                 <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center font-bold text-yellow-600">
@@ -144,12 +152,18 @@ export default function MessagesPage() {
 
                 <div className="flex-1 overflow-hidden">
                   <div className="flex justify-between">
-                    <p className="font-bold">{chat.name}</p>
-                    <p className="text-xs text-slate-400">{chat.time}</p>
+                    <p className="font-bold text-slate-900 dark:text-slate-100">
+                      {chat.name}
+                    </p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500">
+                      {chat.time}
+                    </p>
                   </div>
 
-                  <p className="text-xs text-slate-400">{chat.major}</p>
-                  <p className="text-sm text-slate-500 truncate mt-1">
+                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                    {chat.major}
+                  </p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-1">
                     {chat.lastMessage}
                   </p>
                 </div>
@@ -158,18 +172,22 @@ export default function MessagesPage() {
           </div>
 
           <div className="flex flex-col">
-            <div className="p-5 border-b border-slate-200 flex items-center gap-3">
+            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3">
               <div className="w-11 h-11 rounded-full bg-yellow-100 flex items-center justify-center font-bold text-yellow-600">
                 {selectedChat.name[0].toUpperCase()}
               </div>
 
               <div>
-                <h2 className="font-extrabold">{selectedChat.name}</h2>
-                <p className="text-sm text-slate-500">{selectedChat.major}</p>
+                <h2 className="font-extrabold text-slate-900 dark:text-slate-100">
+                  {selectedChat.name}
+                </h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {selectedChat.major}
+                </p>
               </div>
             </div>
 
-            <div className="flex-1 p-6 space-y-4 bg-slate-50">
+            <div className="flex-1 p-6 space-y-4 bg-slate-50 dark:bg-slate-950">
               {selectedChat.messages.map((message, index) => (
                 <div
                   key={index}
@@ -181,7 +199,7 @@ export default function MessagesPage() {
                     className={`max-w-[65%] px-4 py-3 rounded-3xl text-sm ${
                       message.sender === "me"
                         ? "bg-blue-500 text-white rounded-br-md"
-                        : "bg-white text-slate-700 rounded-bl-md border border-slate-200"
+                        : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-bl-md border border-slate-200 dark:border-slate-700"
                     }`}
                   >
                     {message.text}
@@ -190,7 +208,7 @@ export default function MessagesPage() {
               ))}
             </div>
 
-            <div className="p-4 border-t border-slate-200 bg-white flex gap-3">
+            <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex gap-3">
               <input
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
@@ -198,7 +216,7 @@ export default function MessagesPage() {
                   if (e.key === "Enter") sendMessage();
                 }}
                 placeholder="Type a message..."
-                className="flex-1 rounded-full bg-slate-100 border border-slate-200 px-5 py-3 outline-none focus:ring-2 focus:ring-blue-400"
+                className="flex-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-5 py-3 outline-none focus:ring-2 focus:ring-blue-400 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
               />
 
               <button
@@ -230,7 +248,9 @@ function MenuItem({
     <Link
       href={href}
       className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-bold cursor-pointer transition ${
-        active ? "bg-blue-500 text-white" : "text-slate-700 hover:bg-slate-100"
+        active
+          ? "bg-blue-500 text-white"
+          : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
       }`}
     >
       <span>{icon}</span>
