@@ -29,7 +29,7 @@ export default function NotificationsPage() {
     {
       id: 4,
       type: "like",
-      user: "kevin_cs",
+      user: "nepobaby67",
       text: "liked your marketplace post.",
       time: "1h ago",
     },
@@ -69,11 +69,10 @@ export default function NotificationsPage() {
       <section className="max-w-7xl mx-auto grid grid-cols-[240px_1fr_320px] gap-6 px-6 py-6">
         <aside className="sticky top-24 h-fit">
           <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 p-4">
-            <MenuItem icon="" text="Home" href="/home" />
-            <MenuItem icon="" text="Forum" href="/forum" />
-            <MenuItem icon="" text="Marketplace" href="/marketplace" />
+            <MenuItem text="Home" href="/home" />
+            <MenuItem text="Forum" href="/forum" />
+            <MenuItem text="Marketplace" href="/marketplace" />
             <MenuItem
-              icon=""
               text="Notifications"
               href="/notifications"
               active
@@ -161,12 +160,10 @@ export default function NotificationsPage() {
 }
 
 function MenuItem({
-  icon,
   text,
   href,
   active = false,
 }: {
-  icon: string;
   text: string;
   href: string;
   active?: boolean;
@@ -180,8 +177,7 @@ function MenuItem({
           : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
       }`}
     >
-      <span>{icon}</span>
-      <span>{text}</span>
+      {text}
     </Link>
   );
 }

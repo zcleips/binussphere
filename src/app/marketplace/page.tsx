@@ -1,4 +1,5 @@
 "use client";
+import SearchBar from "../components/SearchBar";
 import DarkModeToggle from "../components/DarkModeToggle";
 import Link from "next/link";
 import { useState, useRef } from "react";
@@ -24,6 +25,7 @@ type Post = {
 };
 
 export default function HomePage() {
+  const [searchKeyword, setSearchKeyword] = useState("");
   const postBoxRef = useRef<HTMLTextAreaElement>(null);
 
 function focusPostBox() {
@@ -104,12 +106,7 @@ function focusPostBox() {
       <nav className="sticky top-0 z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-8 py-4 flex items-center justify-between">
         <img src="/logo.png" alt="Binusphere" className="w-[170px]" />
 
-        <div className="w-[420px]">
-          <input
-            placeholder="Search BinusSphere"
-            className="w-full rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 px-5 py-3 outline-none focus:ring-2 focus:ring-blue-400"
-          />
-        </div>
+        <SearchBar posts={posts} onSearch={setSearchKeyword} />
 
         <div className="flex items-center gap-3">
           <DarkModeToggle />
@@ -132,11 +129,11 @@ function focusPostBox() {
       <section className="max-w-7xl mx-auto grid grid-cols-[240px_1fr_320px] gap-6 px-6 py-6">
         <aside className="sticky top-24 h-fit">
           <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 p-4">
-            <MenuItem icon="" text="Home" href="/home" />
-            <MenuItem icon="" text="Forum" href="/forum" />
-            <MenuItem icon="" text="Marketplace" href="/marketplace" active />
-            <MenuItem icon="" text="Notifications" href="/notifications" />
-            <MenuItem icon="" text="Profile" href="/profile" />
+            <MenuItem text="Home" href="/home" />
+            <MenuItem text="Forum" href="/forum" />
+            <MenuItem text="Marketplace" href="/marketplace" active />
+            <MenuItem text="Notifications" href="/notifications" />
+            <MenuItem text="Profile" href="/profile" />
 
             <button
   onClick={focusPostBox}
@@ -196,9 +193,21 @@ function focusPostBox() {
             </div>
           </div>
 
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} onDeletePost={deletePost} />
-          ))}
+          {posts
+  .filter((post) => {
+    if (!searchKeyword.trim()) return true;
+
+    const text = `${post.content} ${post.tag} ${post.name}`.toLowerCase();
+    return text.includes(searchKeyword.toLowerCase());
+  })
+  .map((post) => (
+    <PostCard
+      key={post.id}
+      post={post}
+      onDeletePost={deletePost}
+      searchKeyword={searchKeyword}
+    />
+  ))}
         </section>
 
         <aside className="sticky top-24 h-fit space-y-5">
@@ -216,14 +225,24 @@ function focusPostBox() {
           </div>
 
           <div className="bg-blue-500 rounded-3xl shadow-sm p-5 text-white">
-            <h2 className="font-extrabold text-xl">Campus Marketplace</h2>
-            <p className="mt-2 text-white/80">
-              Buy, sell, and trade safely with verified Binusians.
-            </p>
-            <button className="mt-4 rounded-full bg-yellow-400 text-slate-900 font-bold px-5 py-2">
-              Explore
-            </button>
-          </div>
+  <h2 className="font-extrabold text-xl">
+    Campus Marketplace
+  </h2>
+
+  <p className="mt-2 text-white/80">
+    Buy, sell, and trade safely with verified Binusians.
+  </p>
+  <p>
+    ㅤㅤㅤ
+  </p>
+
+  <Link
+    href="/marketplace"
+    className="mt-4 inline-flex items-center justify-center rounded-full bg-yellow-400 text-slate-900 font-bold px-5 py-2 hover:bg-yellow-500 transition"
+  >
+    Explore
+  </Link>
+</div>
         </aside>
       </section>
     </main>
@@ -231,12 +250,10 @@ function focusPostBox() {
 }
 
 function MenuItem({
-  icon,
   text,
   href,
   active = false,
 }: {
-  icon: string;
   text: string;
   href: string;
   active?: boolean;
@@ -250,18 +267,46 @@ function MenuItem({
           : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
       }`}
     >
-      <span>{icon}</span>
-      <span>{text}</span>
+      {text}
     </Link>
+  );
+}
+
+function HighlightText({
+  text,
+  keyword,
+}: {
+  text: string;
+  keyword: string;
+}) {
+  if (!keyword.trim()) return <>{text}</>;
+
+  const regex = new RegExp(`(${keyword})`, "gi");
+  const parts = text.split(regex);
+
+  return (
+    <>
+      {parts.map((part, index) =>
+        part.toLowerCase() === keyword.toLowerCase() ? (
+          <strong key={index} className="font-extrabold text-blue-500">
+            {part}
+          </strong>
+        ) : (
+          <span key={index}>{part}</span>
+        )
+      )}
+    </>
   );
 }
 
 function PostCard({
   post,
   onDeletePost,
+  searchKeyword,
 }: {
   post: Post;
   onDeletePost: (postId: number) => void;
+  searchKeyword: string;
 }) {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likes);
@@ -374,7 +419,8 @@ function PostCard({
           </div>
 
           <p className="mt-4 text-slate-800 dark:text-slate-200 leading-relaxed">
-            {post.content}
+            <HighlightText text={post.content} keyword={searchKeyword} />
+            <HighlightText text={post.tag} keyword={searchKeyword} />
           </p>
 
           {post.tag && (

@@ -110,11 +110,11 @@ export default function MessagesPage() {
       <section className="max-w-7xl mx-auto grid grid-cols-[240px_1fr] gap-6 px-6 py-6">
         <aside className="sticky top-24 h-fit">
           <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 p-4">
-            <MenuItem icon="" text="Home" href="/home" />
-            <MenuItem icon="" text="Forum" href="/forum" />
-            <MenuItem icon="" text="Marketplace" href="/marketplace" />
-            <MenuItem icon="" text="Notifications" href="/notifications" />
-            <MenuItem icon="" text="Profile" href="/profile" />
+            <MenuItem text="Home" href="/home" />
+            <MenuItem text="Forum" href="/forum" />
+            <MenuItem text="Marketplace" href="/marketplace" />
+            <MenuItem text="Notifications" href="/notifications" />
+            <MenuItem text="Profile" href="/profile" />
 
             <Link
   href="/home?focusPost=true"
@@ -146,15 +146,19 @@ export default function MessagesPage() {
                     : "hover:bg-slate-50 dark:hover:bg-slate-800"
                 }`}
               >
-                <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center font-bold text-yellow-600">
-                  {chat.name[0].toUpperCase()}
-                </div>
+                <Link href={`/profile/${chat.name}`}>
+  <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center font-bold text-yellow-600 cursor-pointer hover:opacity-90 transition">
+    {chat.name[0].toUpperCase()}
+  </div>
+</Link>
 
                 <div className="flex-1 overflow-hidden">
                   <div className="flex justify-between">
-                    <p className="font-bold text-slate-900 dark:text-slate-100">
-                      {chat.name}
-                    </p>
+                    <Link href={`/profile/${chat.name}`}>
+  <p className="font-bold text-slate-900 dark:text-slate-100 hover:underline cursor-pointer">
+    {chat.name}
+  </p>
+</Link>
                     <p className="text-xs text-slate-400 dark:text-slate-500">
                       {chat.time}
                     </p>
@@ -173,14 +177,18 @@ export default function MessagesPage() {
 
           <div className="flex flex-col">
             <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3">
-              <div className="w-11 h-11 rounded-full bg-yellow-100 flex items-center justify-center font-bold text-yellow-600">
-                {selectedChat.name[0].toUpperCase()}
-              </div>
+              <Link href={`/profile/${selectedChat.name}`}>
+  <div className="w-11 h-11 rounded-full bg-yellow-100 flex items-center justify-center font-bold text-yellow-600 cursor-pointer hover:opacity-90 transition">
+    {selectedChat.name[0].toUpperCase()}
+  </div>
+</Link>
 
               <div>
-                <h2 className="font-extrabold text-slate-900 dark:text-slate-100">
-                  {selectedChat.name}
-                </h2>
+                <Link href={`/profile/${selectedChat.name}`}>
+  <h2 className="font-extrabold text-slate-900 dark:text-slate-100 hover:underline cursor-pointer">
+    {selectedChat.name}
+  </h2>
+</Link>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   {selectedChat.major}
                 </p>
@@ -234,12 +242,10 @@ export default function MessagesPage() {
 }
 
 function MenuItem({
-  icon,
   text,
   href,
   active = false,
 }: {
-  icon: string;
   text: string;
   href: string;
   active?: boolean;
@@ -253,8 +259,7 @@ function MenuItem({
           : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
       }`}
     >
-      <span>{icon}</span>
-      <span>{text}</span>
+      {text}
     </Link>
   );
 }

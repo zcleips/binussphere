@@ -96,11 +96,11 @@ export default function OtherProfilePage() {
       <section className="max-w-7xl mx-auto grid grid-cols-[240px_1fr_320px] gap-6 px-6 py-6">
         <aside className="sticky top-24 h-fit">
           <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 p-4">
-            <MenuItem icon="" text="Home" href="/home"/>
-            <MenuItem icon="" text="Forum" href="/forum" />
-            <MenuItem icon="" text="Marketplace" href="/marketplace" />
-            <MenuItem icon="" text="Notifications" href="/notifications" />
-            <MenuItem icon="" text="Profile" href="/profile" />
+            <MenuItem text="Home" href="/home"/>
+            <MenuItem text="Forum" href="/forum" />
+            <MenuItem text="Marketplace" href="/marketplace" />
+            <MenuItem text="Notifications" href="/notifications" />
+            <MenuItem text="Profile" href="/profile" />
             <Link
               href="/home?focusPost=true"
               className="mt-5 block w-full rounded-full bg-yellow-400 text-center text-slate-900 font-extrabold py-3 hover:bg-yellow-500 transition"
@@ -259,12 +259,10 @@ export default function OtherProfilePage() {
 }
 
 function MenuItem({
-  icon,
   text,
   href,
   active = false,
 }: {
-  icon: string
   text: string;
   href: string;
   active?: boolean;
@@ -272,13 +270,12 @@ function MenuItem({
   return (
     <Link
       href={href}
-      className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-bold cursor-pointer transition ${
+      className={`flex items-center px-4 py-3 rounded-2xl font-bold cursor-pointer transition ${
         active
           ? "bg-blue-500 text-white"
           : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
       }`}
     >
-      <span>{icon}</span>
       {text}
     </Link>
   );
