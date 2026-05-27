@@ -266,7 +266,6 @@ function MenuItem({
   href,
   active = false,
 }: {
-  icon: string;
   text: string;
   href: string;
   active?: boolean;
