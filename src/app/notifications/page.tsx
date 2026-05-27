@@ -16,7 +16,7 @@ export default function NotificationsPage() {
       id: 2,
       type: "reply",
       user: "roses_are_rosie",
-      text: "replied to your comment: “UI-nya clean banget.”",
+      text: "replied to your comment: “oh gituu okok thx”",
       time: "14m ago",
     },
     {
@@ -32,6 +32,27 @@ export default function NotificationsPage() {
       user: "nepobaby67",
       text: "liked your marketplace post.",
       time: "1h ago",
+    },
+    {
+      id: 5,
+      type: "like",
+      user: "sakura__",
+      text: "liked your skripsi post.",
+      time: "2h ago",
+    },
+    {
+      id: 6,
+      type: "dm",
+      user: "millymill",
+      text: "sent you a direct message",
+      time: "2h ago",
+    },
+    {
+      id: 7,
+      type: "reply",
+      user: "lesyeuxdenini",
+      text: "replied to your comment: “DM aku dong, mau nanya”",
+      time: "2h 30m ago",
     },
   ];
 
@@ -77,7 +98,7 @@ export default function NotificationsPage() {
               href="/notifications"
               active
             />
-            <MenuItem icon="" text="Profile" href="/profile" />
+            <MenuItem text="Profile" href="/profile" />
 
             <Link
   href="/home?focusPost=true"
@@ -143,13 +164,13 @@ export default function NotificationsPage() {
             </h2>
             <div className="mt-4 space-y-3 text-slate-600 dark:text-slate-400">
               <p>
-                <span className="font-bold text-blue-500">2</span> new likes
+                <span className="font-bold text-blue-500">3</span> new likes
               </p>
               <p>
-                <span className="font-bold text-blue-500">1</span> new reply
+                <span className="font-bold text-blue-500">2</span> new reply
               </p>
               <p>
-                <span className="font-bold text-blue-500">1</span> new DM
+                <span className="font-bold text-blue-500">2</span> new DM
               </p>
             </div>
           </div>

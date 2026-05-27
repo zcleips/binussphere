@@ -431,14 +431,14 @@ export default function ProfilePage() {
             </h2>
             <div className="mt-4 space-y-3 text-slate-600 dark:text-slate-400">
               <p>
-                <span className="font-bold text-blue-500">12</span> total likes
+                <span className="font-bold text-blue-500">7804</span> total likes
               </p>
               <p>
                 <span className="font-bold text-blue-500">4</span> comments
                 received
               </p>
               <p>
-                <span className="font-bold text-blue-500">3</span> forum
+                <span className="font-bold text-blue-500">1</span> forum
                 discussions
               </p>
             </div>
