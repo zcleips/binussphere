@@ -1,23 +1,27 @@
 "use client";
 
-import DarkModeToggle from "../../components/DarkModeToggle";
+import DarkModeToggle from "../components/DarkModeToggle";
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   MessageCircle,
   CheckCircle2,
+  Camera,
+  Bookmark,
   ChevronUp,
   ChevronDown,
   MessageSquare,
   Share2,
-  Bookmark,
+  Trash2,
+  LogOut,
+  Pencil,
   X,
 } from "lucide-react";
-import { supabase } from "../../lib/supabase";
-import { useBookmark } from "../../forum/hooks/useVote";
-import { useUnreadNotifications } from "../../forum/hooks/useUnreadNotifications";
-import { useNotificationContext } from "../../context/NotificationContext";
+import { supabase } from "../lib/supabase";
+import { usePosts, Post } from "../forum/hooks/usePosts";
+import { useBookmark } from "../forum/hooks/useVote";
+import { useUnreadNotifications } from "../forum/hooks/useUnreadNotifications";
+import { useNotificationContext } from "../context/NotificationContext";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -29,19 +33,7 @@ type Profile = {
   nim: string | null;
   is_verified: boolean;
   created_at: string;
-};
-
-type PublicPost = {
-  id: string;
-  title: string;
-  content: string;
-  like_count: number;
-  comment_count: number;
-  created_at: string;
-  edited_at: string | null;
-  category: { name: string; slug: string };
-  attachments?: { storage_path: string }[];
-  userBookmarked?: boolean;
+  updated_at: string;
 };
 
 type JoinedCategory = {
@@ -74,25 +66,68 @@ function getPublicUrl(storagePath: string) {
   return data.publicUrl;
 }
 
-// ─── Post Card ────────────────────────────────────────────────────────────────
+// ─── Post card (profile view) ─────────────────────────────────────────────────
 
-function PublicPostCard({ post }: { post: PublicPost }) {
-  const [lightboxImg, setLightboxImg] = useState<string | null>(null);
+function ProfilePostCard({
+  post,
+  onDeleted,
+}: {
+  post: Post;
+  onDeleted: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [localLikes, setLocalLikes] = useState(post.like_count);
+  const [userVote, setUserVote] = useState<1 | -1 | null>(post.userVote ?? null);
   const { bookmarked, toggleBookmark } = useBookmark(post.id, post.userBookmarked ?? false);
   const firstAttachment = post.attachments?.[0];
   const imageUrl = firstAttachment ? getPublicUrl(firstAttachment.storage_path) : null;
+  const [lightboxImg, setLightboxImg] = useState<string | null>(null);
+
+  async function handleVote(direction: 1 | -1) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const isUnvoting = userVote === direction;
+    if (isUnvoting) {
+      setLocalLikes((c) => c - direction);
+      setUserVote(null);
+      await supabase.from("likes").delete()
+        .eq("user_id", user.id).eq("target_type", "post").eq("target_id", post.id);
+    } else {
+      setLocalLikes((c) => c + direction - (userVote ?? 0));
+      setUserVote(direction);
+      await supabase.from("likes").upsert(
+        { user_id: user.id, target_type: "post", target_id: post.id, direction },
+        { onConflict: "user_id,target_type,target_id" }
+      );
+    }
+  }
+
+  async function handleDelete() {
+    await supabase.from("posts").update({ is_deleted: true }).eq("id", post.id);
+    onDeleted();
+  }
 
   return (
     <>
       <article className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
         <div className="flex">
           {/* Vote column */}
-          <div className="bg-slate-50 dark:bg-slate-800/50 flex flex-col items-center py-4 px-3 gap-1 rounded-l-2xl">
-            <ChevronUp className="w-5 h-5 text-slate-300 dark:text-slate-600" strokeWidth={2.5} />
-            <span className="text-sm font-bold tabular-nums text-slate-700 dark:text-slate-300">
-              {post.like_count}
+          <div className="bg-slate-50 dark:bg-slate-800/50 flex flex-col items-center py-4 px-3 gap-1">
+            <button
+              onClick={() => handleVote(1)}
+              className={`p-1 rounded transition hover:bg-slate-100 dark:hover:bg-slate-800 ${userVote === 1 ? "text-blue-500" : "text-slate-400"}`}
+            >
+              <ChevronUp className="w-5 h-5" strokeWidth={2.5} />
+            </button>
+            <span className={`text-sm font-bold tabular-nums ${userVote === 1 ? "text-blue-500" : userVote === -1 ? "text-red-400" : "text-slate-700 dark:text-slate-300"}`}>
+              {localLikes}
             </span>
-            <ChevronDown className="w-5 h-5 text-slate-300 dark:text-slate-600" strokeWidth={2.5} />
+            <button
+              onClick={() => handleVote(-1)}
+              className={`p-1 rounded transition hover:bg-slate-100 dark:hover:bg-slate-800 ${userVote === -1 ? "text-red-400" : "text-slate-400"}`}
+            >
+              <ChevronDown className="w-5 h-5" strokeWidth={2.5} />
+            </button>
           </div>
 
           {/* Content */}
@@ -100,14 +135,12 @@ function PublicPostCard({ post }: { post: PublicPost }) {
             <div className="flex items-center gap-2 flex-wrap mb-2">
               <Link
                 href={`/community/${post.category.slug}`}
-                className="text-xs font-bold bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 px-2.5 py-0.5 rounded-full hover:bg-blue-200 dark:hover:bg-blue-900 transition"
+                className="text-xs font-bold bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 px-2.5 py-0.5 rounded-full hover:bg-blue-200 transition"
               >
                 r/{post.category.slug}
               </Link>
               <span className="text-xs text-slate-400">{timeAgo(post.created_at)}</span>
-              {post.edited_at && (
-                <span className="text-xs text-slate-400 italic">(diedit)</span>
-              )}
+              {post.edited_at && <span className="text-xs text-slate-400 italic">(diedit)</span>}
             </div>
 
             <h2 className="font-bold text-slate-900 dark:text-slate-100 text-base leading-snug mb-1">
@@ -129,10 +162,13 @@ function PublicPostCard({ post }: { post: PublicPost }) {
             )}
 
             <div className="flex items-center gap-1 mt-3 flex-wrap">
-              <span className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 px-3 py-1.5 rounded-full">
+              <button
+                onClick={() => setExpanded(!expanded)}
+                className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 px-3 py-1.5 rounded-full transition"
+              >
                 <MessageSquare className="w-4 h-4" />
                 {post.comment_count} Komentar
-              </span>
+              </button>
               <button
                 onClick={toggleBookmark}
                 className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full transition ${
@@ -145,15 +181,18 @@ function PublicPostCard({ post }: { post: PublicPost }) {
                 {bookmarked ? "Disimpan" : "Simpan"}
               </button>
               <button
-                onClick={() =>
-                  navigator.clipboard.writeText(
-                    `${window.location.origin}/forum/post/${post.id}`
-                  )
-                }
+                onClick={() => navigator.clipboard.writeText(`${window.location.origin}/forum/post/${post.id}`)}
                 className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 px-3 py-1.5 rounded-full transition"
               >
                 <Share2 className="w-4 h-4" />
                 Bagikan
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 px-3 py-1.5 rounded-full transition"
+              >
+                <Trash2 className="w-4 h-4" />
+                Hapus
               </button>
             </div>
           </div>
@@ -165,10 +204,7 @@ function PublicPostCard({ post }: { post: PublicPost }) {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
           onClick={() => setLightboxImg(null)}
         >
-          <button
-            className="absolute top-4 right-4 text-white bg-black/40 rounded-full p-2 hover:bg-black/60 transition"
-            onClick={() => setLightboxImg(null)}
-          >
+          <button className="absolute top-4 right-4 text-white bg-black/40 rounded-full p-2 hover:bg-black/60 transition" onClick={() => setLightboxImg(null)}>
             <X className="w-5 h-5" />
           </button>
           <img
@@ -183,90 +219,231 @@ function PublicPostCard({ post }: { post: PublicPost }) {
   );
 }
 
-// ─── Main page ────────────────────────────────────────────────────────────────
+// ─── Edit Profile Modal ───────────────────────────────────────────────────────
 
-export default function PublicProfilePage() {
-  const params = useParams();
-  const username = params?.username as string;
+function EditProfileModal({
+  profile,
+  onClose,
+  onSaved,
+}: {
+  profile: Profile;
+  onClose: () => void;
+  onSaved: (updated: Profile) => void;
+}) {
+  const [displayName, setDisplayName] = useState(profile.display_name ?? "");
+  const [username, setUsername] = useState(profile.username);
+  const [nim, setNim] = useState(profile.nim ?? "");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(profile.avatar_url);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const avatarRef = useRef<HTMLInputElement>(null);
 
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [posts, setPosts] = useState<PublicPost[]>([]);
-  const [joinedCategories, setJoinedCategories] = useState<JoinedCategory[]>([]);
-  const [activityStats, setActivityStats] = useState<ActivityStat[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const { unreadCount } = useNotificationContext();
+  async function handleSave() {
+    if (username.trim().length < 3) { setError("Username minimal 3 karakter."); return; }
+    if (username.trim().length > 30) { setError("Username maksimal 30 karakter."); return; }
 
+    setSubmitting(true);
+    setError("");
 
-  // Get logged-in user so we can redirect to /profile if viewing own page
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setCurrentUserId(user?.id ?? null);
-    });
-  }, []);
+    let avatar_url = profile.avatar_url;
 
-  const fetchPublicProfile = useCallback(async (uname: string) => {
-    setLoading(true);
+    if (avatarFile) {
+      const path = `avatars/${profile.id}/${Date.now()}_${avatarFile.name}`;
+      const { error: uploadErr } = await supabase.storage.from("attachments").upload(path, avatarFile, { upsert: true });
+      if (uploadErr) {
+        setError("Gagal upload foto profil: " + uploadErr.message);
+        setSubmitting(false);
+        return;
+      }
+      const { data } = supabase.storage.from("attachments").getPublicUrl(path);
+      avatar_url = data.publicUrl;
+    }
 
-    // Fetch profile by username
-    const { data: profileData } = await supabase
+    const { data, error: updateErr } = await supabase
       .from("profiles")
-      .select("*")
-      .eq("username", uname)
+      .update({
+        username: username.trim(),
+        display_name: displayName.trim() || null,
+        nim: nim.trim() || null,
+        avatar_url,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", profile.id)
+      .select()
       .single();
 
-    if (!profileData) {
-      setNotFound(true);
-      setLoading(false);
+    if (updateErr || !data) {
+      setError(updateErr?.message || "Gagal menyimpan profil.");
+      setSubmitting(false);
       return;
     }
 
-    setProfile(profileData as Profile);
+    onSaved(data as Profile);
+    onClose();
+  }
 
-    // Fetch public posts
-    const { data: postsData } = await supabase
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800">
+          <h2 className="text-xl font-extrabold">Edit Profil</h2>
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {/* Avatar */}
+          <div>
+            <label className="font-bold text-sm block mb-2">Foto Profil</label>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="avatar" className="w-20 h-20 rounded-full object-cover border-2 border-slate-200 dark:border-slate-700" />
+                ) : (
+                  <div className="w-20 h-20 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center font-bold text-yellow-600 dark:text-yellow-400 text-2xl">
+                    {profile.username[0].toUpperCase()}
+                  </div>
+                )}
+                <button
+                  onClick={() => avatarRef.current?.click()}
+                  className="absolute bottom-0 right-0 bg-blue-500 text-white rounded-full p-1.5 hover:bg-blue-600 transition"
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <button
+                onClick={() => avatarRef.current?.click()}
+                className="text-sm font-semibold text-blue-500 hover:underline"
+              >
+                Ganti foto
+              </button>
+            </div>
+            <input
+              ref={avatarRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0] || null;
+                setAvatarFile(f);
+                if (f) setAvatarPreview(URL.createObjectURL(f));
+              }}
+            />
+          </div>
+
+          {/* Display name */}
+          <div>
+            <label className="font-bold text-sm block mb-2">Display Name</label>
+            <input
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Nama tampilan (opsional)"
+              className="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400 text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+            />
+          </div>
+
+          {/* Username */}
+          <div>
+            <label className="font-bold text-sm block mb-2">Username</label>
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="username"
+              maxLength={30}
+              className="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400 text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+            />
+            <p className="text-xs text-slate-400 mt-1">{username.length}/30</p>
+          </div>
+
+          {/* NIM */}
+          <div>
+            <label className="font-bold text-sm block mb-2">NIM</label>
+            <input
+              value={nim}
+              onChange={(e) => setNim(e.target.value)}
+              placeholder="Nomor Induk Mahasiswa"
+              className="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400 text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+            />
+          </div>
+
+          {error && <p className="text-sm text-red-500 bg-red-50 dark:bg-red-950/30 rounded-xl px-4 py-2">{error}</p>}
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button onClick={onClose} className="rounded-full px-5 py-2 font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+              Batal
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={submitting}
+              className="rounded-full bg-blue-500 text-white font-bold px-6 py-2 hover:bg-blue-600 transition disabled:opacity-50"
+            >
+              {submitting ? "Menyimpan..." : "Simpan"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
+
+export default function ProfilePage() {
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [joinedCategories, setJoinedCategories] = useState<JoinedCategory[]>([]);
+  const [activityStats, setActivityStats] = useState<ActivityStat[]>([]);
+  const [showEdit, setShowEdit] = useState(false);
+  const [postRefreshKey, setPostRefreshKey] = useState(0);
+  const { unreadCount } = useNotificationContext();
+
+
+  const { posts, loading: postsLoading, refetch: refetchPosts } = usePosts(
+    undefined,
+    "newest",
+    undefined,
+    undefined
+  );
+
+  const myPosts = posts.filter((p) => p.author_id === currentUserId);
+
+  const fetchProfile = useCallback(async (userId: string) => {
+    setProfileLoading(true);
+
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+
+    if (data) setProfile(data as Profile);
+
+    const { data: memberships } = await supabase
+      .from("community_members")
+      .select("category_id, categories(id, name, slug)")
+      .eq("user_id", userId);
+
+    if (memberships) {
+      const cats = memberships
+        .map((m: any) => m.categories)
+        .filter(Boolean) as JoinedCategory[];
+      setJoinedCategories(cats);
+    }
+
+    const { data: userPosts } = await supabase
       .from("posts")
-      .select(`
-        id, title, content, like_count, comment_count, created_at, edited_at,
-        categories(name, slug),
-        post_attachments(storage_path)
-      `)
-      .eq("author_id", profileData.id)
-      .eq("is_deleted", false)
-      .order("created_at", { ascending: false });
+      .select("category_id, categories(name, slug)")
+      .eq("author_id", userId)
+      .eq("is_deleted", false);
 
-    if (postsData) {
-      // Fetch current user's bookmarks so the bookmark button reflects correct state
-      const { data: { user } } = await supabase.auth.getUser();
-      let bookmarkedIds = new Set<string>();
-      if (user) {
-        const { data: bmarks } = await supabase
-          .from("bookmarks")
-          .select("post_id")
-          .eq("user_id", user.id);
-        if (bmarks) bookmarkedIds = new Set(bmarks.map((b: any) => b.post_id));
-      }
-
-      const mapped = postsData.map((p: any) => ({
-        id: p.id,
-        title: p.title,
-        content: p.content,
-        like_count: p.like_count,
-        comment_count: p.comment_count,
-        created_at: p.created_at,
-        edited_at: p.edited_at,
-        category: p.categories,
-        attachments: p.post_attachments ?? [],
-        userBookmarked: bookmarkedIds.has(p.id),
-      }));
-      setPosts(mapped);
-
-      // Build activity stats
+    if (userPosts) {
       const countMap = new Map<string, ActivityStat>();
-      postsData.forEach((p: any) => {
+      userPosts.forEach((p: any) => {
         if (!p.categories) return;
-        const key = p.categories.slug;
+        const key = p.category_id;
         if (!countMap.has(key)) {
           countMap.set(key, {
             category_name: p.categories.name,
@@ -276,40 +453,36 @@ export default function PublicProfilePage() {
         }
         countMap.get(key)!.post_count++;
       });
-      const sorted = Array.from(countMap.values()).sort(
-        (a, b) => b.post_count - a.post_count
-      );
+
+      const sorted = Array.from(countMap.values()).sort((a, b) => b.post_count - a.post_count);
       setActivityStats(sorted.slice(0, 3));
     }
 
-    // Fetch joined communities
-    const { data: memberships } = await supabase
-      .from("community_members")
-      .select("category_id, categories(id, name, slug)")
-      .eq("user_id", profileData.id);
-
-    if (memberships) {
-      const cats = memberships
-        .map((m: any) => m.categories)
-        .filter(Boolean) as JoinedCategory[];
-      setJoinedCategories(cats);
-    }
-
-    setLoading(false);
+    setProfileLoading(false);
   }, []);
 
   useEffect(() => {
-    if (username) fetchPublicProfile(username);
-  }, [username, fetchPublicProfile]);
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setCurrentUserId(user.id);
+        fetchProfile(user.id);
+      } else {
+        setProfileLoading(false);
+      }
+    });
+  }, [fetchProfile]);
 
-  // If viewing own profile, redirect to /profile
-  useEffect(() => {
-    if (profile && currentUserId && profile.id === currentUserId) {
-      window.location.href = "/profile";
-    }
-  }, [profile, currentUserId]);
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    window.location.href = "/";
+  }
 
-  if (loading) {
+  function handleProfileSaved(updated: Profile) {
+    setProfile(updated);
+    if (currentUserId) fetchProfile(currentUserId);
+  }
+
+  if (profileLoading) {
     return (
       <main className="min-h-screen bg-[#F5F7FB] dark:bg-slate-950 flex items-center justify-center">
         <div className="text-slate-400 text-sm">Memuat profil...</div>
@@ -317,21 +490,13 @@ export default function PublicProfilePage() {
     );
   }
 
-  if (notFound || !profile) {
+  if (!profile) {
     return (
       <main className="min-h-screen bg-[#F5F7FB] dark:bg-slate-950 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-slate-600 dark:text-slate-400 mb-2 font-bold text-lg">
-            Profil tidak ditemukan.
-          </p>
-          <p className="text-sm text-slate-400 mb-6">
-            User <strong>u/{username}</strong> tidak ada.
-          </p>
-          <Link
-            href="/forum"
-            className="rounded-full bg-blue-500 text-white font-bold px-6 py-2 hover:bg-blue-600 transition"
-          >
-            Kembali ke Forum
+          <p className="text-slate-600 dark:text-slate-400 mb-4">Kamu belum login.</p>
+          <Link href="/" className="rounded-full bg-blue-500 text-white font-bold px-6 py-2 hover:bg-blue-600 transition">
+            Login
           </Link>
         </div>
       </main>
@@ -351,10 +516,7 @@ export default function PublicProfilePage() {
           >
             <MessageCircle className="w-5 h-5" />
           </Link>
-          <Link
-            href="/profile"
-            className="rounded-full bg-blue-500 text-white font-bold px-5 py-2 hover:bg-blue-600 transition"
-          >
+          <Link href="/profile" className="rounded-full bg-blue-500 text-white font-bold px-5 py-2 hover:bg-blue-600 transition">
             Profile
           </Link>
         </div>
@@ -368,7 +530,8 @@ export default function PublicProfilePage() {
             <MenuItem text="Forum" href="/forum" />
             <MenuItem text="Marketplace" href="/marketplace" />
             <MenuItem text="Notifications" href="/notifications" badge={unreadCount} />
-            <MenuItem text="Profile" href="/profile" />
+            <MenuItem text="Bookmarks" href="/bookmarks" />
+            <MenuItem text="Profile" href="/profile" active />
           </div>
         </aside>
 
@@ -376,7 +539,6 @@ export default function PublicProfilePage() {
         <section className="space-y-5">
           {/* Profile card */}
           <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
-            {/* Banner */}
             <div className="h-36 bg-gradient-to-r from-blue-500 via-blue-400 to-yellow-300" />
 
             <div className="px-6 pb-6">
@@ -392,6 +554,14 @@ export default function PublicProfilePage() {
                     {profile.username[0].toUpperCase()}
                   </div>
                 )}
+
+                <button
+                  onClick={() => setShowEdit(true)}
+                  className="flex items-center gap-2 rounded-full border border-blue-500 text-blue-500 font-bold px-5 py-2 hover:bg-blue-50 dark:hover:bg-white/5 transition"
+                >
+                  <Pencil className="w-4 h-4" />
+                  Edit Profil
+                </button>
               </div>
 
               <div className="mt-4">
@@ -403,60 +573,51 @@ export default function PublicProfilePage() {
                     <CheckCircle2 className="w-5 h-5 text-blue-500" />
                   )}
                 </div>
-                <p className="text-slate-500 dark:text-slate-400 font-semibold">
-                  u/{profile.username}
-                </p>
+                <p className="text-slate-500 dark:text-slate-400 font-semibold">u/{profile.username}</p>
 
                 {profile.nim && (
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    NIM:{" "}
-                    <span className="font-semibold text-slate-700 dark:text-slate-300">
-                      {profile.nim}
-                    </span>
+                    NIM: <span className="font-semibold text-slate-700 dark:text-slate-300">{profile.nim}</span>
                   </p>
                 )}
 
                 <div className="flex gap-5 mt-4 text-sm text-slate-600 dark:text-slate-400">
                   <p>
-                    <span className="font-bold text-slate-900 dark:text-slate-100">
-                      {posts.length}
-                    </span>{" "}
-                    posts
+                    <span className="font-bold text-slate-900 dark:text-slate-100">{myPosts.length}</span> posts
                   </p>
                   <p>
-                    <span className="font-bold text-slate-900 dark:text-slate-100">
-                      {joinedCategories.length}
-                    </span>{" "}
-                    communities
+                    <span className="font-bold text-slate-900 dark:text-slate-100">{joinedCategories.length}</span> communities
                   </p>
                 </div>
 
                 <p className="mt-2 text-xs text-slate-400">
-                  Bergabung{" "}
-                  {new Date(profile.created_at).toLocaleDateString("id-ID", {
-                    year: "numeric",
-                    month: "long",
-                  })}
+                  Bergabung {new Date(profile.created_at).toLocaleDateString("id-ID", { year: "numeric", month: "long" })}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Posts */}
           <h2 className="font-extrabold text-xl px-1 text-slate-900 dark:text-slate-100">
-            Postingan dari u/{profile.username}
+            Postingan Saya
           </h2>
 
-          {posts.length === 0 ? (
+          {postsLoading ? (
+            <div className="text-sm text-slate-400 px-1">Memuat postingan...</div>
+          ) : myPosts.length === 0 ? (
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-10 text-center">
-              <p className="font-bold text-slate-600 dark:text-slate-400">
-                Belum ada postingan.
-              </p>
+              <p className="font-bold text-slate-600 dark:text-slate-400">Belum ada postingan.</p>
+              <Link href="/forum" className="mt-3 inline-flex rounded-full bg-blue-500 text-white font-bold px-5 py-2 hover:bg-blue-600 transition text-sm">
+                Buat post pertama
+              </Link>
             </div>
           ) : (
             <div className="space-y-3">
-              {posts.map((post) => (
-                <PublicPostCard key={post.id} post={post} />
+              {myPosts.map((post) => (
+                <ProfilePostCard
+                  key={`${post.id}-${postRefreshKey}`}
+                  post={post}
+                  onDeleted={() => { setPostRefreshKey((k) => k + 1); refetchPosts(); }}
+                />
               ))}
             </div>
           )}
@@ -470,19 +631,14 @@ export default function PublicProfilePage() {
                 <CheckCircle2 className="w-5 h-5" />
                 <h2 className="font-extrabold text-lg">Binusian Terverifikasi</h2>
               </div>
-              <p className="mt-2 text-white/80 text-sm">
-                Akun mahasiswa BINUS yang sudah diverifikasi.
-              </p>
+              <p className="mt-2 text-white/80 text-sm">Akun mahasiswa BINUS yang sudah diverifikasi.</p>
             </div>
           )}
 
-          {/* Communities */}
           <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 p-5">
             <h3 className="font-extrabold text-base mb-3">Communities</h3>
             {joinedCategories.length === 0 ? (
-              <p className="text-sm text-slate-400">
-                Belum join community apapun.
-              </p>
+              <p className="text-sm text-slate-400">Belum join community apapun.</p>
             ) : (
               <div className="space-y-1">
                 {joinedCategories.map((c) => (
@@ -501,7 +657,6 @@ export default function PublicProfilePage() {
             )}
           </div>
 
-          {/* Most active in */}
           {activityStats.length > 0 && (
             <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 p-5">
               <h3 className="font-extrabold text-base mb-3">Paling Aktif Di</h3>
@@ -513,31 +668,50 @@ export default function PublicProfilePage() {
                     className="flex items-center justify-between group"
                   >
                     <div className="flex items-center gap-2">
-                      <span
-                        className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-extrabold text-white ${
-                          i === 0
-                            ? "bg-yellow-400"
-                            : i === 1
-                            ? "bg-slate-400"
-                            : "bg-amber-600"
-                        }`}
-                      >
+                      <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-extrabold text-white ${i === 0 ? "bg-yellow-400" : i === 1 ? "bg-slate-400" : "bg-amber-600"}`}>
                         {i + 1}
                       </span>
                       <span className="text-sm font-semibold text-slate-600 dark:text-slate-400 group-hover:text-blue-500 transition">
                         r/{stat.category_slug}
                       </span>
                     </div>
-                    <span className="text-xs font-bold text-slate-400">
-                      {stat.post_count} posts
-                    </span>
+                    <span className="text-xs font-bold text-slate-400">{stat.post_count} posts</span>
                   </Link>
                 ))}
               </div>
             </div>
           )}
+
+          <Link
+            href="/bookmarks"
+            className="flex items-center gap-3 bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 hover:border-blue-300 dark:hover:border-blue-700 transition group"
+          >
+            <div className="w-10 h-10 rounded-full bg-yellow-100 dark:bg-yellow-900/40 flex items-center justify-center">
+              <Bookmark className="w-5 h-5 text-yellow-500" />
+            </div>
+            <div>
+              <p className="font-bold text-slate-900 dark:text-slate-100 group-hover:text-blue-500 transition">Postingan Tersimpan</p>
+              <p className="text-xs text-slate-400">Lihat semua bookmark kamu</p>
+            </div>
+          </Link>
+
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 rounded-3xl border border-red-200 dark:border-red-900/50 text-red-500 font-bold px-5 py-3 hover:bg-red-50 dark:hover:bg-red-500/10 transition"
+          >
+            <LogOut className="w-4 h-4" />
+            Log out
+          </button>
         </aside>
       </section>
+
+      {showEdit && (
+        <EditProfileModal
+          profile={profile}
+          onClose={() => setShowEdit(false)}
+          onSaved={handleProfileSaved}
+        />
+      )}
     </main>
   );
 }
