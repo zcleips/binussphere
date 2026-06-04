@@ -23,7 +23,7 @@ export default function LoginPage() {
     }
 
     setErrorMsg("");
-    setSuccessMsg("Account created successfully!");
+    setSuccessMsg("Account created successfully! Please check your email to confirm your account");
 
     setEmail("");
     setPassword("");
