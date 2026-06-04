@@ -490,19 +490,30 @@ export default function ProfilePage() {
     );
   }
 
-  if (!profile) {
-    return (
-      <main className="min-h-screen bg-[#F5F7FB] dark:bg-slate-950 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-slate-600 dark:text-slate-400 mb-4">Kamu belum login.</p>
-          <Link href="/" className="rounded-full bg-blue-500 text-white font-bold px-6 py-2 hover:bg-blue-600 transition">
-            Login
-          </Link>
-        </div>
-      </main>
-    );
-  }
+if (!currentUserId) {
+  return (
+    <main className="min-h-screen bg-[#F5F7FB] dark:bg-slate-950 flex items-center justify-center">
+      <div className="text-center">
+        <p className="text-slate-600 dark:text-slate-400 mb-4">Kamu belum login.</p>
+        <Link href="/" className="rounded-full bg-blue-500 text-white font-bold px-6 py-2 hover:bg-blue-600 transition">
+          Login
+        </Link>
+      </div>
+    </main>
+  );
+}
 
+if (!profile) {
+  return (
+    <main className="min-h-screen bg-[#F5F7FB] dark:bg-slate-950 flex items-center justify-center">
+      <div className="text-center">
+        <p className="text-slate-600 dark:text-slate-400 mb-4">
+          Profil belum ditemukan. Coba logout lalu login ulang.
+        </p>
+      </div>
+    </main>
+  );
+}
   return (
     <main className="min-h-screen bg-[#F5F7FB] text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       {/* Navbar */}
