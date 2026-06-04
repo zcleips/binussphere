@@ -2,7 +2,6 @@
 import SearchBar from "../components/SearchBar";
 import DarkModeToggle from "../components/DarkModeToggle";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { Heart, Flag, Trash2, MessageCircle } from "lucide-react";
 
@@ -27,18 +26,19 @@ type Post = {
 
 export default function HomePage() {
   const [searchKeyword, setSearchKeyword] = useState("");
-  const searchParams = useSearchParams();
   const postBoxRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (searchParams.get("focusPost") === "true") {
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get("focusPost") === "true") {
       postBoxRef.current?.focus();
       postBoxRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "center",
       });
     }
-  }, [searchParams]);
+  }, []);
 
   function focusPostBox() {
     postBoxRef.current?.focus();
