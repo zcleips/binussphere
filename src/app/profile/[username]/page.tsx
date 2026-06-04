@@ -1,6 +1,11 @@
 "use client";
 
-import DarkModeToggle from "../components/DarkModeToggle";
+import DarkModeToggle from "../../components/DarkModeToggle";
+import { supabase } from "../../lib/supabase";
+import { usePosts, Post } from "../../forum/hooks/usePosts";
+import { useBookmark } from "../../forum/hooks/useVote";
+import { useUnreadNotifications } from "../../forum/hooks/useUnreadNotifications";
+import { useNotificationContext } from "../../context/NotificationContext";
 import Link from "next/link";
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
@@ -17,12 +22,6 @@ import {
   Pencil,
   X,
 } from "lucide-react";
-import { supabase } from "../lib/supabase";
-import { usePosts, Post } from "../forum/hooks/usePosts";
-import { useBookmark } from "../forum/hooks/useVote";
-import { useUnreadNotifications } from "../forum/hooks/useUnreadNotifications";
-import { useNotificationContext } from "../context/NotificationContext";
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Profile = {
