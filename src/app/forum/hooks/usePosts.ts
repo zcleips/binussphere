@@ -15,6 +15,7 @@ export type Author = {
   display_name: string | null;
   avatar_url: string | null;
   is_verified: boolean;
+  nim: string | null;
 };
 
 export type Attachment = {
@@ -89,7 +90,7 @@ export function usePosts(
         .from("posts")
         .select(`
           *,
-          author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified),
+          author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, nim),
           category:categories!posts_category_id_fkey(id, name, slug, description)
         `)
         .eq("is_deleted", false);
@@ -204,7 +205,7 @@ export function useComments(postId: string) {
         .from("comments")
         .select(`
           *,
-          author:profiles!comments_author_id_fkey(id, username, display_name, avatar_url, is_verified)
+          author:profiles!comments_author_id_fkey(id, username, display_name, avatar_url, is_verified, nim)
         `)
         .eq("post_id", postId)
         .eq("is_deleted", false)

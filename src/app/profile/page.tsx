@@ -2,26 +2,20 @@
 
 import DarkModeToggle from "../components/DarkModeToggle";
 import Link from "next/link";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   MessageCircle,
   CheckCircle2,
-  Camera,
   Bookmark,
-  ChevronUp,
-  ChevronDown,
-  MessageSquare,
-  Share2,
-  Trash2,
   LogOut,
   Pencil,
-  X,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
-import { usePosts, Post } from "../forum/hooks/usePosts";
-import { useBookmark } from "../forum/hooks/useVote";
-import { useUnreadNotifications } from "../forum/hooks/useUnreadNotifications";
+import { usePosts } from "../forum/hooks/usePosts";
 import { useNotificationContext } from "../context/NotificationContext";
+import ForumSidebar from "../components/ForumSidebar";
+import EditProfileModal from "../components/EditProfileModal";
+import { PostCard } from "../components/PostCard";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -48,346 +42,6 @@ type ActivityStat = {
   post_count: number;
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function timeAgo(dateStr: string) {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return "just now";
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  const d = Math.floor(h / 24);
-  return `${d}d ago`;
-}
-
-function getPublicUrl(storagePath: string) {
-  const { data } = supabase.storage.from("attachments").getPublicUrl(storagePath);
-  return data.publicUrl;
-}
-
-// ─── Post card (profile view) ─────────────────────────────────────────────────
-
-function ProfilePostCard({
-  post,
-  onDeleted,
-}: {
-  post: Post;
-  onDeleted: () => void;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const [localLikes, setLocalLikes] = useState(post.like_count);
-  const [userVote, setUserVote] = useState<1 | -1 | null>(post.userVote ?? null);
-  const { bookmarked, toggleBookmark } = useBookmark(post.id, post.userBookmarked ?? false);
-  const firstAttachment = post.attachments?.[0];
-  const imageUrl = firstAttachment ? getPublicUrl(firstAttachment.storage_path) : null;
-  const [lightboxImg, setLightboxImg] = useState<string | null>(null);
-
-  async function handleVote(direction: 1 | -1) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const isUnvoting = userVote === direction;
-    if (isUnvoting) {
-      setLocalLikes((c) => c - direction);
-      setUserVote(null);
-      await supabase.from("likes").delete()
-        .eq("user_id", user.id).eq("target_type", "post").eq("target_id", post.id);
-    } else {
-      setLocalLikes((c) => c + direction - (userVote ?? 0));
-      setUserVote(direction);
-      await supabase.from("likes").upsert(
-        { user_id: user.id, target_type: "post", target_id: post.id, direction },
-        { onConflict: "user_id,target_type,target_id" }
-      );
-    }
-  }
-
-  async function handleDelete() {
-    await supabase.from("posts").update({ is_deleted: true }).eq("id", post.id);
-    onDeleted();
-  }
-
-  return (
-    <>
-      <article className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-        <div className="flex">
-          {/* Vote column */}
-          <div className="bg-slate-50 dark:bg-slate-800/50 flex flex-col items-center py-4 px-3 gap-1">
-            <button
-              onClick={() => handleVote(1)}
-              className={`p-1 rounded transition hover:bg-slate-100 dark:hover:bg-slate-800 ${userVote === 1 ? "text-blue-500" : "text-slate-400"}`}
-            >
-              <ChevronUp className="w-5 h-5" strokeWidth={2.5} />
-            </button>
-            <span className={`text-sm font-bold tabular-nums ${userVote === 1 ? "text-blue-500" : userVote === -1 ? "text-red-400" : "text-slate-700 dark:text-slate-300"}`}>
-              {localLikes}
-            </span>
-            <button
-              onClick={() => handleVote(-1)}
-              className={`p-1 rounded transition hover:bg-slate-100 dark:hover:bg-slate-800 ${userVote === -1 ? "text-red-400" : "text-slate-400"}`}
-            >
-              <ChevronDown className="w-5 h-5" strokeWidth={2.5} />
-            </button>
-          </div>
-
-          {/* Content */}
-          <div className="flex-1 p-4 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-2">
-              <Link
-                href={`/community/${post.category.slug}`}
-                className="text-xs font-bold bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 px-2.5 py-0.5 rounded-full hover:bg-blue-200 transition"
-              >
-                r/{post.category.slug}
-              </Link>
-              <span className="text-xs text-slate-400">{timeAgo(post.created_at)}</span>
-              {post.edited_at && <span className="text-xs text-slate-400 italic">(diedit)</span>}
-            </div>
-
-            <h2 className="font-bold text-slate-900 dark:text-slate-100 text-base leading-snug mb-1">
-              {post.title}
-            </h2>
-            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed line-clamp-3">
-              {post.content}
-            </p>
-
-            {imageUrl && (
-              <div className="mt-3">
-                <img
-                  src={imageUrl}
-                  alt="Post attachment"
-                  className="max-h-60 w-full object-cover rounded-xl border border-slate-200 dark:border-slate-700 cursor-zoom-in"
-                  onClick={() => setLightboxImg(imageUrl)}
-                />
-              </div>
-            )}
-
-            <div className="flex items-center gap-1 mt-3 flex-wrap">
-              <button
-                onClick={() => setExpanded(!expanded)}
-                className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 px-3 py-1.5 rounded-full transition"
-              >
-                <MessageSquare className="w-4 h-4" />
-                {post.comment_count} Komentar
-              </button>
-              <button
-                onClick={toggleBookmark}
-                className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full transition ${
-                  bookmarked
-                    ? "text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20"
-                    : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                }`}
-              >
-                <Bookmark className={`w-4 h-4 ${bookmarked ? "fill-yellow-500" : ""}`} />
-                {bookmarked ? "Disimpan" : "Simpan"}
-              </button>
-              <button
-                onClick={() => navigator.clipboard.writeText(`${window.location.origin}/forum/post/${post.id}`)}
-                className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 px-3 py-1.5 rounded-full transition"
-              >
-                <Share2 className="w-4 h-4" />
-                Bagikan
-              </button>
-              <button
-                onClick={handleDelete}
-                className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 px-3 py-1.5 rounded-full transition"
-              >
-                <Trash2 className="w-4 h-4" />
-                Hapus
-              </button>
-            </div>
-          </div>
-        </div>
-      </article>
-
-      {lightboxImg && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
-          onClick={() => setLightboxImg(null)}
-        >
-          <button className="absolute top-4 right-4 text-white bg-black/40 rounded-full p-2 hover:bg-black/60 transition" onClick={() => setLightboxImg(null)}>
-            <X className="w-5 h-5" />
-          </button>
-          <img
-            src={lightboxImg}
-            alt="Full size"
-            className="max-h-[90vh] max-w-[90vw] object-contain rounded-2xl shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      )}
-    </>
-  );
-}
-
-// ─── Edit Profile Modal ───────────────────────────────────────────────────────
-
-function EditProfileModal({
-  profile,
-  onClose,
-  onSaved,
-}: {
-  profile: Profile;
-  onClose: () => void;
-  onSaved: (updated: Profile) => void;
-}) {
-  const [displayName, setDisplayName] = useState(profile.display_name ?? "");
-  const [username, setUsername] = useState(profile.username);
-  const [nim, setNim] = useState(profile.nim ?? "");
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(profile.avatar_url);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const avatarRef = useRef<HTMLInputElement>(null);
-
-  async function handleSave() {
-    if (username.trim().length < 3) { setError("Username minimal 3 karakter."); return; }
-    if (username.trim().length > 30) { setError("Username maksimal 30 karakter."); return; }
-
-    setSubmitting(true);
-    setError("");
-
-    let avatar_url = profile.avatar_url;
-
-    if (avatarFile) {
-      const path = `avatars/${profile.id}/${Date.now()}_${avatarFile.name}`;
-      const { error: uploadErr } = await supabase.storage.from("attachments").upload(path, avatarFile, { upsert: true });
-      if (uploadErr) {
-        setError("Gagal upload foto profil: " + uploadErr.message);
-        setSubmitting(false);
-        return;
-      }
-      const { data } = supabase.storage.from("attachments").getPublicUrl(path);
-      avatar_url = data.publicUrl;
-    }
-
-    const { data, error: updateErr } = await supabase
-      .from("profiles")
-      .update({
-        username: username.trim(),
-        display_name: displayName.trim() || null,
-        nim: nim.trim() || null,
-        avatar_url,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", profile.id)
-      .select()
-      .single();
-
-    if (updateErr || !data) {
-      setError(updateErr?.message || "Gagal menyimpan profil.");
-      setSubmitting(false);
-      return;
-    }
-
-    onSaved(data as Profile);
-    onClose();
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800">
-          <h2 className="text-xl font-extrabold">Edit Profil</h2>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-6 space-y-5">
-          {/* Avatar */}
-          <div>
-            <label className="font-bold text-sm block mb-2">Foto Profil</label>
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                {avatarPreview ? (
-                  <img src={avatarPreview} alt="avatar" className="w-20 h-20 rounded-full object-cover border-2 border-slate-200 dark:border-slate-700" />
-                ) : (
-                  <div className="w-20 h-20 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center font-bold text-yellow-600 dark:text-yellow-400 text-2xl">
-                    {profile.username[0].toUpperCase()}
-                  </div>
-                )}
-                <button
-                  onClick={() => avatarRef.current?.click()}
-                  className="absolute bottom-0 right-0 bg-blue-500 text-white rounded-full p-1.5 hover:bg-blue-600 transition"
-                >
-                  <Camera className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              <button
-                onClick={() => avatarRef.current?.click()}
-                className="text-sm font-semibold text-blue-500 hover:underline"
-              >
-                Ganti foto
-              </button>
-            </div>
-            <input
-              ref={avatarRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0] || null;
-                setAvatarFile(f);
-                if (f) setAvatarPreview(URL.createObjectURL(f));
-              }}
-            />
-          </div>
-
-          {/* Display name */}
-          <div>
-            <label className="font-bold text-sm block mb-2">Display Name</label>
-            <input
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Nama tampilan (opsional)"
-              className="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400 text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
-            />
-          </div>
-
-          {/* Username */}
-          <div>
-            <label className="font-bold text-sm block mb-2">Username</label>
-            <input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="username"
-              maxLength={30}
-              className="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400 text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
-            />
-            <p className="text-xs text-slate-400 mt-1">{username.length}/30</p>
-          </div>
-
-          {/* NIM */}
-          <div>
-            <label className="font-bold text-sm block mb-2">NIM</label>
-            <input
-              value={nim}
-              onChange={(e) => setNim(e.target.value)}
-              placeholder="Nomor Induk Mahasiswa"
-              className="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-400 text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
-            />
-          </div>
-
-          {error && <p className="text-sm text-red-500 bg-red-50 dark:bg-red-950/30 rounded-xl px-4 py-2">{error}</p>}
-
-          <div className="flex justify-end gap-3 pt-2">
-            <button onClick={onClose} className="rounded-full px-5 py-2 font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
-              Batal
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={submitting}
-              className="rounded-full bg-blue-500 text-white font-bold px-6 py-2 hover:bg-blue-600 transition disabled:opacity-50"
-            >
-              {submitting ? "Menyimpan..." : "Simpan"}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function ProfilePage() {
@@ -399,7 +53,6 @@ export default function ProfilePage() {
   const [showEdit, setShowEdit] = useState(false);
   const [postRefreshKey, setPostRefreshKey] = useState(0);
   const { unreadCount } = useNotificationContext();
-
 
   const { posts, loading: postsLoading, refetch: refetchPosts } = usePosts(
     undefined,
@@ -453,7 +106,6 @@ export default function ProfilePage() {
         }
         countMap.get(key)!.post_count++;
       });
-
       const sorted = Array.from(countMap.values()).sort((a, b) => b.post_count - a.post_count);
       setActivityStats(sorted.slice(0, 3));
     }
@@ -524,16 +176,7 @@ export default function ProfilePage() {
 
       <section className="max-w-7xl mx-auto grid grid-cols-[240px_1fr_300px] gap-6 px-6 py-6">
         {/* Left sidebar */}
-        <aside className="sticky top-24 h-fit space-y-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 p-4">
-            <MenuItem text="Home" href="/home" />
-            <MenuItem text="Forum" href="/forum" />
-            <MenuItem text="Marketplace" href="/marketplace" />
-            <MenuItem text="Notifications" href="/notifications" badge={unreadCount} />
-            <MenuItem text="Bookmarks" href="/bookmarks" />
-            <MenuItem text="Profile" href="/profile" active />
-          </div>
-        </aside>
+        <ForumSidebar activePage="profile" currentUserId={currentUserId} />
 
         {/* Main content */}
         <section className="space-y-5">
@@ -569,9 +212,7 @@ export default function ProfilePage() {
                   <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">
                     {profile.display_name || profile.username}
                   </h1>
-                  {profile.is_verified && (
-                    <CheckCircle2 className="w-5 h-5 text-blue-500" />
-                  )}
+                  {profile.is_verified && <CheckCircle2 className="w-5 h-5 text-blue-500" />}
                 </div>
                 <p className="text-slate-500 dark:text-slate-400 font-semibold">u/{profile.username}</p>
 
@@ -582,12 +223,8 @@ export default function ProfilePage() {
                 )}
 
                 <div className="flex gap-5 mt-4 text-sm text-slate-600 dark:text-slate-400">
-                  <p>
-                    <span className="font-bold text-slate-900 dark:text-slate-100">{myPosts.length}</span> posts
-                  </p>
-                  <p>
-                    <span className="font-bold text-slate-900 dark:text-slate-100">{joinedCategories.length}</span> communities
-                  </p>
+                  <p><span className="font-bold text-slate-900 dark:text-slate-100">{myPosts.length}</span> posts</p>
+                  <p><span className="font-bold text-slate-900 dark:text-slate-100">{joinedCategories.length}</span> communities</p>
                 </div>
 
                 <p className="mt-2 text-xs text-slate-400">
@@ -613,9 +250,10 @@ export default function ProfilePage() {
           ) : (
             <div className="space-y-3">
               {myPosts.map((post) => (
-                <ProfilePostCard
+                <PostCard
                   key={`${post.id}-${postRefreshKey}`}
                   post={post}
+                  currentUserId={currentUserId}
                   onDeleted={() => { setPostRefreshKey((k) => k + 1); refetchPosts(); }}
                 />
               ))}
@@ -713,41 +351,5 @@ export default function ProfilePage() {
         />
       )}
     </main>
-  );
-}
-
-function MenuItem({
-  text,
-  href,
-  active = false,
-  badge = 0,
-}: {
-  text: string;
-  href: string;
-  active?: boolean;
-  badge?: number;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`flex items-center justify-between px-4 py-3 rounded-2xl font-bold cursor-pointer transition ${
-        active
-          ? "bg-blue-500 text-white"
-          : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
-      }`}
-    >
-      <span>{text}</span>
-      {badge > 0 && (
-        <span
-          className={`text-xs font-extrabold px-2 py-0.5 rounded-full min-w-[20px] text-center ${
-            active
-              ? "bg-white/30 text-white"
-              : "bg-blue-500 text-white"
-          }`}
-        >
-          {badge > 99 ? "99+" : badge}
-        </span>
-      )}
-    </Link>
   );
 }

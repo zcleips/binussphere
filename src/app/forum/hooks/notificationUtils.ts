@@ -12,7 +12,8 @@ export async function notifyLikeMilestone(
   targetId: string,
   recipientId: string,
   actorId: string,
-  milestone: number
+  milestone: number,
+  postId?: string // required when targetType === "comment"
 ) {
   if (recipientId === actorId) return;
 
@@ -30,11 +31,13 @@ export async function notifyLikeMilestone(
   await supabase.from("notifications").insert({
     recipient_id: recipientId,
     actor_id: actorId,
-    type: `${targetType}_like_milestone`,  // "post_like_milestone" or "comment_like_milestone"
-    target_type: targetType,               // "post" or "comment"
+    type: `${targetType}_like_milestone`,
+    target_type: targetType,
     target_id: targetId,
     is_read: false,
-    metadata: { milestone },
+    // Store post_id in metadata so the notification page can link directly
+    // to the post even when target_id is a comment ID
+    metadata: { milestone, ...(postId ? { post_id: postId } : {}) },
   });
 }
 
@@ -48,10 +51,11 @@ export async function notifyComment(
   const { data, error } = await supabase.from("notifications").insert({
     recipient_id: postAuthorId,
     actor_id: actorId,
-    type: "post_commented",  // ✅ notification type
-    target_type: "post",     // ✅ what's being targeted
+    type: "post_commented",
+    target_type: "post",
     target_id: postId,
     is_read: false,
+    // post_id not needed here — target_id is already the post ID
   });
 
   console.log("notifyComment result:", { data, error });
@@ -60,17 +64,19 @@ export async function notifyComment(
 export async function notifyReply(
   commentId: string,
   commentAuthorId: string,
-  actorId: string
+  actorId: string,
+  postId: string // added — needed for the notification link
 ) {
   if (commentAuthorId === actorId) return;
 
   const { error } = await supabase.from("notifications").insert({
     recipient_id: commentAuthorId,
     actor_id: actorId,
-    type: "comment_replied",  // ✅ notification type
-    target_type: "comment",   // ✅ what's being targeted
+    type: "comment_replied",
+    target_type: "comment",
     target_id: commentId,
     is_read: false,
+    metadata: { post_id: postId },
   });
 
   if (error) console.error("notifyReply error:", error);
@@ -80,7 +86,8 @@ export async function notifyMentions(
   content: string,
   sourceType: "post" | "comment",
   sourceId: string,
-  actorId: string
+  actorId: string,
+  postId?: string // required when sourceType === "comment"
 ) {
   const matches = content.match(/@([a-zA-Z0-9_]+)/g);
   if (!matches) return;
@@ -106,10 +113,12 @@ export async function notifyMentions(
     const { error } = await supabase.from("notifications").insert({
       recipient_id: mentioned.id,
       actor_id: actorId,
-      type: "mentioned",       // ✅ notification type
-      target_type: sourceType, // ✅ "post" or "comment"
+      type: "mentioned",
+      target_type: sourceType,
       target_id: sourceId,
       is_read: false,
+      // When the mention is in a comment, store post_id so we can link correctly
+      metadata: sourceType === "comment" && postId ? { post_id: postId } : null,
     });
     if (error) console.error("notifyMentions error:", error);
   }

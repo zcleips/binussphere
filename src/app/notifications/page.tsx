@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useNotificationContext } from "../context/NotificationContext";
-
+import ForumSidebar from "../components/ForumSidebar";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Notification = {
@@ -195,15 +195,7 @@ export default function NotificationsPage() {
 
       <section className="max-w-7xl mx-auto grid grid-cols-[240px_1fr_300px] gap-6 px-6 py-6">
         {/* Left sidebar */}
-        <aside className="sticky top-24 h-fit">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 p-4">
-            <MenuItem text="Home" href="/home" />
-            <MenuItem text="Forum" href="/forum" />
-            <MenuItem text="Marketplace" href="/marketplace" />
-            <MenuItem text="Notifications" href="/notifications" active badge={sidebarUnreadCount} />
-            <MenuItem text="Profile" href="/profile" />
-          </div>
-        </aside>
+        <ForumSidebar activePage="notifications" currentUserId={currentUserId} />
 
         {/* Main content */}
         <section className="space-y-4">

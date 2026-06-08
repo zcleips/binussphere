@@ -6,7 +6,7 @@ export function useVote(
   targetId: string,
   targetType: "post" | "comment",
   initialCount: number,
-  initialVote: 1 | -1 | null
+  initialVote: 1 | -1 | null,
 ) {
   const [likeCount, setLikeCount] = useState(initialCount);
   const [userVote, setUserVote] = useState<1 | -1 | null>(initialVote);
@@ -64,7 +64,7 @@ export function useVote(
               targetId,
               target.author_id,
               user.id,
-              milestone
+              milestone,
             );
           }
         }
