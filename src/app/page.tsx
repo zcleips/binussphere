@@ -47,7 +47,7 @@ export default function LoginPage() {
     }
 
     setErrorMsg("");
-    window.location.href = "/home";
+    window.location.href = "/forum";
   }
 
   return (
