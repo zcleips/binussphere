@@ -116,4 +116,4 @@ The application is deployed using Vercel and automatically updates when changes 
 
 ## Authors
 
-Christina Angela Jodana, Farrel Immanuel, Billy Godwin
+Christina Angela Jodana, Farrel Immanuel, Billie Godwin
