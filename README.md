@@ -11,30 +11,15 @@ BinusSphere is a university-focused social platform designed specifically for BI
 * Browse trending topics and campus conversations
 * Search posts by keywords
 
-### Marketplace
-
-* Buy, sell, and trade items with fellow students
-* Campus-focused marketplace environment
-* Dedicated marketplace feed
-
 ### User Profiles
 
 * Custom profile picture and banner
 * Editable username and bio
 * Public or private account settings
-* Social links integration
-* Profile music display
 * Personal post history
-
-### Direct Messaging
-
-* One-to-one messaging between users
-* Dedicated conversation interface
-* Quick navigation from profiles to messages
 
 ### Social Features
 
-* Follow and unfollow users
 * Notification system
 * User interaction management
 * Report and block functionality
