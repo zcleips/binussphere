@@ -1,36 +1,134 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BinusSphere
 
-## Getting Started
+BinusSphere is a university-focused social platform designed specifically for BINUS students. The platform combines a discussion forum, campus marketplace, direct messaging system, and student profiles into a single centralized application.
 
-First, run the development server:
+## Features
+
+### Forum
+
+* Create and share posts with the BINUS community
+* Like and comment on discussions
+* Browse trending topics and campus conversations
+* Search posts by keywords
+
+### Marketplace
+
+* Buy, sell, and trade items with fellow students
+* Campus-focused marketplace environment
+* Dedicated marketplace feed
+
+### User Profiles
+
+* Custom profile picture and banner
+* Editable username and bio
+* Public or private account settings
+* Social links integration
+* Profile music display
+* Personal post history
+
+### Direct Messaging
+
+* One-to-one messaging between users
+* Dedicated conversation interface
+* Quick navigation from profiles to messages
+
+### Social Features
+
+* Follow and unfollow users
+* Notification system
+* User interaction management
+* Report and block functionality
+
+### Search
+
+* Search posts across the platform
+* Keyword highlighting in results
+* Search suggestions and recommendations
+
+## Tech Stack
+
+### Frontend
+
+* Next.js
+* React
+* TypeScript
+* Tailwind CSS
+
+### Backend & Database
+
+* Supabase
+* PostgreSQL
+
+### Deployment
+
+* Vercel
+
+## Project Structure
+
+```text
+src/
+├── app/
+│   ├── home/
+│   ├── forum/
+│   ├── marketplace/
+│   ├── profile/
+│   ├── notifications/
+│   ├── messages/
+│   └── lib/
+├── components/
+└── public/
+```
+
+## Installation
+
+1. Clone the repository
+
+```bash
+git clone https://github.com/zcleips/binussphere.git
+cd binussphere
+```
+
+2. Install dependencies
+
+```bash
+npm install
+```
+
+3. Configure environment variables
+
+Create a `.env.local` file:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+4. Run the development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```text
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deployment
 
-## Learn More
+The application is deployed using Vercel and automatically updates when changes are pushed to the main branch.
 
-To learn more about Next.js, take a look at the following resources:
+## Future Improvements
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+* Real-time messaging
+* Image uploads for posts
+* Marketplace product categories
+* Enhanced moderation tools
+* Student verification system
+* Mobile responsiveness improvements
+* Recommendation system
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Authors
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Christina Angela Jodana, Farrel Immanuel, Billy Godwin
