@@ -1,119 +1,108 @@
 # BinusSphere
 
-BinusSphere is a university-focused social platform designed specifically for BINUS students. The platform combines a discussion forum, campus marketplace, direct messaging system, and student profiles into a single centralized application.
+## Deskripsi Proyek
 
-## Features
+**BinusSphere** merupakan platform sosial berbasis web yang dirancang khusus untuk mahasiswa BINUS University. Platform ini mengintegrasikan berbagai kebutuhan mahasiswa dalam satu aplikasi, seperti forum diskusi, profil pengguna, dan fitur sosial yang mendukung interaksi antar mahasiswa.
 
-### Forum
+Melalui BinusSphere, mahasiswa dapat berinteraksi, berbagi informasi, berdiskusi, serta memperluas koneksi dalam lingkungan kampus secara lebih mudah dan terpusat.
 
-* Create and share posts with the BINUS community
-* Like and comment on discussions
-* Browse trending topics and campus conversations
-* Search posts by keywords
+---
 
-### User Profiles
+## Fitur Utama
 
-* Custom profile picture and banner
-* Editable username and bio
-* Public or private account settings
-* Personal post history
+| Fitur           | Deskripsi                                                               |
+| --------------- | ----------------------------------------------------------------------- |
+| Forum Diskusi   | Membuat, membagikan, menyukai, dan mengomentari postingan.              |
+| Profil Pengguna | Mengatur foto profil, banner, username, dan biodata.                    |
+| Fitur Sosial    | Sistem notifikasi, interaksi/kategorisasi, pelaporan, dan pemblokiran akun. |
+| Pencarian       | Mencari postingan berdasarkan kata kunci dengan rekomendasi pencarian.  |
 
-### Social Features
+---
 
-* Notification system
-* User interaction management
-* Report and block functionality
+## Teknologi yang Digunakan
 
-### Search
+| Kategori   | Teknologi                                |
+| ---------- | ---------------------------------------- |
+| Frontend   | Next.js, React, TypeScript, Tailwind CSS |
+| Backend    | Supabase                                 |
+| Database   | PostgreSQL                               |
+| Deployment | Vercel                                   |
 
-* Search posts across the platform
-* Keyword highlighting in results
-* Search suggestions and recommendations
+---
 
-## Tech Stack
-
-### Frontend
-
-* Next.js
-* React
-* TypeScript
-* Tailwind CSS
-
-### Backend & Database
-
-* Supabase
-* PostgreSQL
-
-### Deployment
-
-* Vercel
-
-## Project Structure
+## Struktur Proyek
 
 ```text
 src/
 ├── app/
 │   ├── home/
 │   ├── forum/
-│   ├── marketplace/
 │   ├── profile/
 │   ├── notifications/
-│   ├── messages/
 │   └── lib/
 ├── components/
 └── public/
 ```
 
-## Installation
+---
 
-1. Clone the repository
+## Instalasi
 
-```bash
-git clone https://github.com/zcleips/binussphere.git
-cd binussphere
-```
+| Langkah              | Perintah                                               |
+| -------------------- | ------------------------------------------------------ |
+| Clone Repository     | `git clone https://github.com/zcleips/binussphere.git` |
+| Masuk ke Folder      | `cd binussphere`                                       |
+| Install Dependencies | `npm install`                                          |
+| Jalankan Aplikasi    | `npm run dev`                                          |
 
-2. Install dependencies
+### Environment Variables
 
-```bash
-npm install
-```
-
-3. Configure environment variables
-
-Create a `.env.local` file:
+Buat file `.env.local`
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-4. Run the development server
+---
 
-```bash
-npm run dev
-```
+## Tautan Proyek
 
-5. Open
+| Dokumen            | Link                                                                                                                     |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| PPT Presentasi     | https://www.canva.com/design/DAHLgLGDUAE/OO_vHJPxQBC2G8V-VXEObA/edit                                                     |
+| Dokumentasi Notion | https://app.notion.com/p/BINUSpehere-364008a8484d80f49d22dae980cc18d3?source=copy_link                                   |
+| Google Drive       | https://drive.google.com/drive/folders/13l3LFZXVoHutPcv2vksMncz64X5r7F6k                                                 |
+| Web Application    | https://binussphere-e3tz3ekxa-christinaangelaj-1924s-projects.vercel.app/?_vercel_share=tPFU23UsogAEyQtAaOszS5AzLC5G3JMb |
 
-```text
-http://localhost:3000
-```
+---
 
-## Deployment
+## Pengembangan Selanjutnya
 
-The application is deployed using Vercel and automatically updates when changes are pushed to the main branch.
+| Rencana Pengembangan |
+|----------------------|
+| Peningkatan performa dan akurasi pencarian |
+| Penambahan fitur marketplace untuk mendukung transaksi antar mahasiswa |
+| Penambahan fitur messaging untuk komunikasi antar pengguna |
+| Pengembangan sistem rekomendasi konten yang lebih personal |
+| Optimalisasi tampilan dan pengalaman pengguna pada perangkat mobile |
+| Peningkatan sistem moderasi dan keamanan platform |
+| Implementasi verifikasi mahasiswa BINUS |
+| Pengembangan fitur personalisasi profil pengguna |
+---
 
-## Future Improvements
+## Kelompok 8
 
-* Real-time messaging
-* Image uploads for posts
-* Marketplace product categories
-* Enhanced moderation tools
-* Student verification system
-* Mobile responsiveness improvements
-* Recommendation system
+| Nama                     | NIM        |
+| ------------------------ | ---------- |
+| Farrel Putra Imanuel The | 2802391883 |
+| Muhamad Fitra Kurnia     | 2802412332 |
+| Billie Godwin            | 2802392816 |
+| Christina Angela Jodana  | 2802394216 |
+| Sabrina Arfanindia Devi  | 2802448755 |
 
-## Authors
+---
 
-Christina Angela Jodana, Farrel Immanuel, Billie Godwin
+## Lisensi
+
+Proyek ini dikembangkan untuk keperluan akademik dan pembelajaran pada mata kuliah Software Engineering - lingkungan BINUS University.
