@@ -95,10 +95,10 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 | Nama                     | NIM        |
 | ------------------------ | ---------- |
-| Farrel Putra Imanuel The | 2802391883 |
-| Muhamad Fitra Kurnia     | 2802412332 |
-| Billie Godwin            | 2802392816 |
 | Christina Angela Jodana  | 2802394216 |
+| Farrel Putra Imanuel The | 2802391883 |
+| Billie Godwin            | 2802392816 |
+| Muhamad Fitra Kurnia     | 2802412332 |
 | Sabrina Arfanindia Devi  | 2802448755 |
 
 ---
